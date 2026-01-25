@@ -50,7 +50,7 @@ export default function SearchPage() {
       setResults(data);
       
       // Extract unique brands
-      const brands = [...new Set(data.map(w => w.brand))].sort();
+      const brands = Array.from(new Set(data.map(w => w.brand))).sort();
       setAvailableBrands(brands);
     }
     
