@@ -17,12 +17,12 @@ export default async function WatchesPage() {
     .order('created_at', { ascending: false });
 
   // Group by collection
-  const collections = watches?.reduce((acc, watch) => {
-    const collection = watch.collection || 'Other';
-    if (!acc[collection]) acc[collection] = [];
-    acc[collection].push(watch);
-    return acc;
-  }, {} as Record<string, typeof watches>);
+const collections: Record<string, any[]> = (watches || []).reduce((acc, watch) => {
+  const collection = watch.collection || 'Other';
+  if (!acc[collection]) acc[collection] = [];
+  acc[collection].push(watch);
+  return acc;
+}, {} as Record<string, any[]>);
 
   return (
     <div className="min-h-screen pt-32 pb-24 px-6 lg:px-12">
