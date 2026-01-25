@@ -113,17 +113,20 @@ export async function fundEscrow(orderId: string): Promise<EscrowResult> {
       .select('total, currency, escrow_id')
       .eq('id', orderId)
       .single();
-    
-    await supabase.from('escrow_transactions').insert({
-      order_id: orderId,
-      type: 'fund',
-      amount: order.total,
-      currency: order.currency,
-      status: 'completed',
-      provider_reference: order.escrow_id
-    });
-    
-    return { success: true, escrowId: order.escrow_id };
+   if (!order) {
+  throw new Error(`Order not found: ${orderId}`);
+}
+
+await supabase.from('escrow_transactions').insert({
+  order_id: orderId,
+  type: 'fund',
+  amount: order.total,
+  currency: order.currency,
+  status: 'completed',
+  provider_reference: order.escrow_id
+});
+
+return { success: true, escrowId: order.escrow_id };
   } catch (error) {
     return { success: false, error: String(error) };
   }
