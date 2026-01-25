@@ -55,18 +55,15 @@ export default function WishlistPage() {
   };
 
   const handleAddToCart = (item: WishlistItem) => {
-    addToCart({
-      id: item.watches.id,
-      name: item.watches.name,
-      brand: item.watches.brand,
-      price: item.watches.price,
-      currency: item.watches.currency,
-      images: item.watches.images,
-      stock: 1,
-      featured: false,
-      specifications: {}
-    });
-  };
+  addToCart({
+    id: item.watches.id,
+    name: item.watches.name,
+    brand: item.watches.brand,
+    price: item.watches.price,
+    currency: item.watches.currency,
+    images: item.watches.images,
+  } as any);
+};
 
   if (loading) {
     return (
