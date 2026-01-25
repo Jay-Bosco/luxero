@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
       products.push({
         name: product.name,
         brand: product.brand,
-        collection: product.collection || null,
+        collection: product.collection || undefined,
         description: product.description || '',
         price: Math.round(price * 100),
         currency: 'USD',
