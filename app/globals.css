@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gold: #d4af37;
+  --gold-light: #e8c84a;
+  --gold-dark: #b8962f;
+  --black: #0a0a0a;
+  --dark: #1a1a1a;
+  --gray: #2a2a2a;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--black);
+  color: #f5f5f5;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--black);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gold);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-light);
+}
+
+/* Selection */
+::selection {
+  background: var(--gold);
+  color: var(--black);
+}
+
+/* Utility classes */
+@layer components {
+  .text-gold-gradient {
+    background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .btn-primary {
+    @apply px-8 py-4 bg-transparent border border-gold-500 text-gold-500 
+           font-sans text-xs tracking-extra-wide uppercase
+           transition-all duration-300
+           hover:bg-gold-500 hover:text-luxury-black;
+  }
+
+  .btn-solid {
+    @apply px-8 py-4 bg-gold-500 text-luxury-black
+           font-sans text-xs tracking-extra-wide uppercase
+           transition-all duration-300
+           hover:bg-gold-400;
+  }
+
+  .input-luxury {
+    @apply w-full px-4 py-3 bg-luxury-gray border border-luxury-muted/30
+           text-luxury-white font-sans text-sm
+           focus:border-gold-500 focus:outline-none
+           transition-colors duration-300;
+  }
+
+  .label-luxury {
+    @apply block text-luxury-light font-sans text-xs tracking-wide uppercase mb-2;
+  }
+
+  .card-luxury {
+    @apply bg-gradient-to-br from-luxury-gray/80 to-luxury-dark/90
+           border border-gold-500/10 
+           transition-all duration-300
+           hover:border-gold-500/30;
+  }
+}
+
+/* Noise texture overlay */
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Golden accent lines */
+.accent-line-left {
+  position: fixed;
+  top: 0;
+  left: 10%;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent, rgba(212, 175, 55, 0.1), transparent);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.accent-line-right {
+  position: fixed;
+  top: 0;
+  right: 10%;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent, rgba(212, 175, 55, 0.1), transparent);
+  z-index: 1;
+  pointer-events: none;
+}

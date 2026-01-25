@@ -1,0 +1,249 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { ShoppingBag, Shield, Truck, Award } from 'lucide-react';
+import { Watch } from '@/types';
+import { useCartStore, formatPrice } from '@/lib/cart';
+import WatchCard from './WatchCard';
+import ReviewForm from '@/components/reviews/ReviewForm';
+import ReviewList from '@/components/reviews/ReviewList';
+
+interface WatchDetailsProps {
+  watch: Watch;
+  relatedWatches: Watch[];
+}
+
+export default function WatchDetails({ watch, relatedWatches }: WatchDetailsProps) {
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [addedToCart, setAddedToCart] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const addItem = useCartStore((state) => state.addItem);
+
+  useEffect(() => {
+    // Fetch reviews for this watch
+    fetch(`/api/reviews?watch_id=${watch.id}`)
+      .then(res => res.json())
+      .then(data => setReviews(data.reviews || []))
+      .catch(err => console.error('Failed to load reviews:', err));
+  }, [watch.id]);
+
+  const handleAddToCart = () => {
+    addItem(watch);
+    setAddedToCart(true);
+    setTimeout(() => setAddedToCart(false), 2000);
+  };
+
+  const specs = watch.specifications || {};
+
+  return (
+    <div className="min-h-screen pt-32 pb-24">
+      {/* Breadcrumb */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-12 mb-12">
+        <nav className="flex items-center gap-3 text-luxury-muted font-sans text-xs tracking-wide">
+          <Link href="/" className="hover:text-gold-500 transition-colors">Home</Link>
+          <span>/</span>
+          <Link href="/watches" className="hover:text-gold-500 transition-colors">Collection</Link>
+          <span>/</span>
+          <span className="text-luxury-light">{watch.name}</span>
+        </nav>
+      </div>
+
+      {/* Main content */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-12">
+        <div className="grid lg:grid-cols-2 gap-16">
+          {/* Images */}
+          <div>
+            {/* Main image */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="relative aspect-square bg-gradient-to-br from-luxury-gray/50 to-luxury-dark/50 mb-6"
+            >
+              <div className="absolute inset-0 flex items-center justify-center p-12">
+                <img
+                  src={watch.images?.[selectedImage] || '/placeholder-watch.jpg'}
+                  alt={watch.name}
+                  className="w-full h-full object-contain drop-shadow-2xl"
+                />
+              </div>
+              
+              {/* Glow effect */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-gold-500/10 rounded-full blur-3xl pointer-events-none" />
+            </motion.div>
+
+            {/* Thumbnail gallery */}
+            {watch.images && watch.images.length > 1 && (
+              <div className="flex gap-4">
+                {watch.images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`w-20 h-20 border transition-colors ${
+                      selectedImage === index
+                        ? 'border-gold-500'
+                        : 'border-luxury-gray hover:border-gold-500/50'
+                    }`}
+                  >
+                    <img
+                      src={image}
+                      alt={`${watch.name} view ${index + 1}`}
+                      className="w-full h-full object-contain p-2"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Details */}
+          <div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <p className="text-gold-500 font-sans text-xs tracking-ultra-wide uppercase mb-4">
+                {watch.collection || watch.brand}
+              </p>
+
+              <h1 className="text-4xl lg:text-5xl font-serif font-light mb-6">
+                {watch.name}
+              </h1>
+
+              <p className="text-gold-500 text-3xl font-serif font-light mb-8">
+                {formatPrice(watch.price, watch.currency)}
+              </p>
+
+              <p className="text-luxury-light font-sans leading-relaxed mb-10">
+                {watch.description}
+              </p>
+
+              {/* Add to cart */}
+              <div className="flex gap-4 mb-10">
+                <motion.button
+                  onClick={handleAddToCart}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`flex-1 py-4 font-sans text-sm tracking-extra-wide uppercase flex items-center justify-center gap-3 transition-all duration-300 ${
+                    addedToCart
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gold-500 text-luxury-black hover:bg-gold-400'
+                  }`}
+                  disabled={watch.stock === 0}
+                >
+                  <ShoppingBag size={18} />
+                  {addedToCart ? 'Added to Cart' : watch.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                </motion.button>
+
+                <Link
+                  href="/cart"
+                  className="px-8 py-4 border border-gold-500 text-gold-500 font-sans text-sm tracking-extra-wide uppercase hover:bg-gold-500 hover:text-luxury-black transition-all duration-300"
+                >
+                  Buy Now
+                </Link>
+              </div>
+
+              {/* Stock indicator */}
+              {watch.stock > 0 && watch.stock <= 5 && (
+                <p className="text-gold-500 font-sans text-sm mb-8">
+                  Only {watch.stock} left in stock
+                </p>
+              )}
+
+              {/* Trust badges */}
+              <div className="grid grid-cols-3 gap-4 py-8 border-t border-b border-luxury-gray/30 mb-10">
+                <div className="text-center">
+                  <Shield className="w-6 h-6 text-gold-500 mx-auto mb-2" />
+                  <p className="text-luxury-muted font-sans text-[10px] tracking-wide uppercase">
+                    Escrow Protected
+                  </p>
+                </div>
+                <div className="text-center">
+                  <Award className="w-6 h-6 text-gold-500 mx-auto mb-2" />
+                  <p className="text-luxury-muted font-sans text-[10px] tracking-wide uppercase">
+                    Authenticity Cert
+                  </p>
+                </div>
+                <div className="text-center">
+                  <Truck className="w-6 h-6 text-gold-500 mx-auto mb-2" />
+                  <p className="text-luxury-muted font-sans text-[10px] tracking-wide uppercase">
+                    Insured Shipping
+                  </p>
+                </div>
+              </div>
+
+              {/* Specifications */}
+              <div>
+                <h3 className="text-lg font-serif font-light mb-6">Specifications</h3>
+                <dl className="grid grid-cols-2 gap-4">
+                  {[
+                    { label: 'Case Size', value: specs.case_size },
+                    { label: 'Case Material', value: specs.case_material },
+                    { label: 'Movement', value: specs.movement },
+                    { label: 'Water Resistance', value: specs.water_resistance },
+                    { label: 'Power Reserve', value: specs.power_reserve },
+                    { label: 'Dial Color', value: specs.dial_color },
+                    { label: 'Strap', value: specs.strap_material },
+                    { label: 'Reference', value: specs.reference_number },
+                  ].filter(spec => spec.value).map((spec) => (
+                    <div key={spec.label} className="py-3 border-b border-luxury-gray/20">
+                      <dt className="text-luxury-muted font-sans text-xs tracking-wide uppercase mb-1">
+                        {spec.label}
+                      </dt>
+                      <dd className="text-luxury-white font-sans text-sm">
+                        {spec.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Reviews Section */}
+        <section className="mt-24">
+          <div className="flex items-center justify-between mb-10">
+            <div className="flex items-center gap-8">
+              <h2 className="text-2xl font-serif font-light">Customer Reviews</h2>
+              <div className="flex-1 h-px bg-gradient-to-r from-gold-500/30 to-transparent" />
+            </div>
+            <button
+              onClick={() => setShowReviewForm(!showReviewForm)}
+              className="btn-primary"
+            >
+              {showReviewForm ? 'Cancel' : 'Write a Review'}
+            </button>
+          </div>
+
+          {showReviewForm && (
+            <div className="mb-12">
+              <ReviewForm watchId={watch.id} watchName={watch.name} />
+            </div>
+          )}
+
+          <ReviewList reviews={reviews} />
+        </section>
+
+        {/* Related watches */}
+        {relatedWatches.length > 0 && (
+          <section className="mt-24">
+            <div className="flex items-center gap-8 mb-10">
+              <h2 className="text-2xl font-serif font-light">From the Same Collection</h2>
+              <div className="flex-1 h-px bg-gradient-to-r from-gold-500/30 to-transparent" />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {relatedWatches.map((relatedWatch, index) => (
+                <WatchCard key={relatedWatch.id} watch={relatedWatch} index={index} />
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    </div>
+  );
+}
