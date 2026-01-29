@@ -26,13 +26,19 @@ export default function Footer() {
               Shop
             </h4>
             <ul className="space-y-3">
-              {['All Watches', 'New Arrivals', 'Featured', 'Rolex', 'Patek Philippe'].map((item) => (
-                <li key={item}>
+              {[
+                { label: 'All Watches', href: '/watches' },
+                { label: 'New Arrivals', href: '/watches?sort=newest' },
+                { label: 'Featured', href: '/watches?filter=featured' },
+                { label: 'Rolex', href: '/watches?brand=Rolex' },
+                { label: 'Patek Philippe', href: '/watches?brand=Patek%20Philippe' }
+              ].map((item) => (
+                <li key={item.label}>
                   <Link
-                    href="/watches"
+                    href={item.href}
                     className="text-luxury-muted font-sans text-sm hover:text-gold-500 transition-colors"
                   >
-                    {item}
+                    {item.label}
                   </Link>
                 </li>
               ))}
@@ -48,9 +54,7 @@ export default function Footer() {
               {[
                 { label: 'About Us', href: '/about' },
                 { label: 'Contact', href: '/contact' },
-                { label: 'Shipping & Tracking', href: '/shipping' },
-                { label: 'Track My Order', href: '/shipping' },
-                { label: 'Returns', href: '/contact' }
+                { label: 'Track My Order', href: '/shipping' }
               ].map((item) => (
                 <li key={item.label}>
                   <Link

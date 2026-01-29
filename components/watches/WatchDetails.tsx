@@ -4,9 +4,10 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Shield, Truck, Award, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingBag, Shield, Truck, Award, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import { Watch } from '@/types';
 import { useCartStore, formatPrice } from '@/lib/cart';
+import { createClient } from '@/lib/supabase/client';
 import WatchCard from './WatchCard';
 import ReviewForm from '@/components/reviews/ReviewForm';
 import ReviewList from '@/components/reviews/ReviewList';
@@ -22,6 +23,9 @@ export default function WatchDetails({ watch, relatedWatches }: WatchDetailsProp
   const [addedToCart, setAddedToCart] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
   
   // Touch handling for swipe
@@ -36,7 +40,63 @@ export default function WatchDetails({ watch, relatedWatches }: WatchDetailsProp
       .then(res => res.json())
       .then(data => setReviews(data.reviews || []))
       .catch(err => console.error('Failed to load reviews:', err));
+    
+    checkWishlistStatus();
   }, [watch.id]);
+
+  const checkWishlistStatus = async () => {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      setIsLoggedIn(false);
+      return;
+    }
+    
+    setIsLoggedIn(true);
+    
+    const { data } = await supabase
+      .from('wishlists')
+      .select('id')
+      .eq('user_id', session.user.id)
+      .eq('watch_id', watch.id)
+      .single();
+    
+    setIsInWishlist(!!data);
+  };
+
+  const toggleWishlist = async () => {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      router.push('/account/login?redirect=/watches/' + watch.id);
+      return;
+    }
+    
+    setWishlistLoading(true);
+    
+    if (isInWishlist) {
+      // Remove from wishlist
+      await supabase
+        .from('wishlists')
+        .delete()
+        .eq('user_id', session.user.id)
+        .eq('watch_id', watch.id);
+      setIsInWishlist(false);
+    } else {
+      // Add to wishlist
+      await supabase
+        .from('wishlists')
+        .insert({
+          user_id: session.user.id,
+          watch_id: watch.id
+        });
+      setIsInWishlist(true);
+    }
+    
+    setWishlistLoading(false);
+  };
 
   const handleAddToCart = () => {
     if (isSoldOut) return;
@@ -115,6 +175,22 @@ export default function WatchDetails({ watch, relatedWatches }: WatchDetailsProp
               onTouchMove={onTouchMove}
               onTouchEnd={onTouchEnd}
             >
+              {/* Wishlist Heart Icon - Top Right */}
+              <button
+                onClick={toggleWishlist}
+                disabled={wishlistLoading}
+                className={`absolute top-4 right-4 z-30 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                  isInWishlist
+                    ? 'bg-red-500 text-white'
+                    : 'bg-luxury-black/50 text-white hover:bg-luxury-black/80'
+                }`}
+              >
+                <Heart 
+                  size={20} 
+                  className={isInWishlist ? 'fill-white' : ''} 
+                />
+              </button>
+
               {/* Sold Out Badge */}
               {isSoldOut && (
                 <div className="absolute top-4 left-4 z-30 bg-red-600 text-white px-4 py-2 font-sans text-sm uppercase tracking-wide">

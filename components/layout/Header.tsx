@@ -7,6 +7,7 @@ import { ShoppingBag, User, Menu, X, LogIn } from 'lucide-react';
 import { useCartStore } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
 import SearchBar from '@/components/search/SearchBar';
+import NotificationBell from '@/components/notifications/NotificationBell';
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -112,6 +113,11 @@ export default function Header() {
           transition={{ duration: 0.5, delay: 0.5 }}
         >
           <SearchBar />
+
+          {/* Notification Bell - Only shown when logged in */}
+          {!checkingAuth && isLoggedIn && (
+            <NotificationBell />
+          )}
 
           {!checkingAuth && !isLoggedIn ? (
             <div className="hidden sm:flex items-center gap-2">

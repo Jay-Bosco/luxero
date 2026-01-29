@@ -7,7 +7,11 @@ export const metadata = {
 };
 
 interface WatchesPageProps {
-  searchParams: { brand?: string };
+  searchParams: { 
+    brand?: string;
+    filter?: string;
+    sort?: string;
+  };
 }
 
 export default async function WatchesPage({ searchParams }: WatchesPageProps) {
@@ -23,8 +27,18 @@ export default async function WatchesPage({ searchParams }: WatchesPageProps) {
   // Get unique brands
   const brands = Array.from(new Set(watches?.map(w => w.brand).filter(Boolean) || []));
 
-  // Get initial brand from URL
+  // Get filters from URL
   const initialBrand = searchParams.brand || null;
+  const initialFilter = searchParams.filter || null; // 'featured', 'new'
+  const initialSort = searchParams.sort || null; // 'newest', 'price-low', 'price-high'
 
-  return <WatchesClient watches={watches || []} brands={brands} initialBrand={initialBrand} />;
+  return (
+    <WatchesClient 
+      watches={watches || []} 
+      brands={brands} 
+      initialBrand={initialBrand}
+      initialFilter={initialFilter}
+      initialSort={initialSort}
+    />
+  );
 }

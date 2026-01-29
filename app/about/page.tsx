@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Shield, Award, Truck, Clock, MapPin, Globe } from 'lucide-react';
+import { Shield, Award, Truck, Clock, MapPin, Globe, Handshake, Users } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AboutPage() {
@@ -24,8 +24,8 @@ export default function AboutPage() {
             </h1>
             <p className="text-luxury-light font-sans text-lg leading-relaxed">
               Luxero is a premium watch store offering authenticated luxury timepieces 
-              from the world's most prestigious brands. With headquarters in Switzerland 
-              and operations in Hong Kong, we deliver excellence worldwide.
+              from the world's most prestigious brands. With headquarters in Switzerland, 
+              operations in Hong Kong, and trusted partners worldwide, we deliver excellence globally.
             </p>
           </motion.div>
         </div>
@@ -95,6 +95,103 @@ export default function AboutPage() {
               </p>
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* Partner Network */}
+      <section className="px-6 lg:px-12 mb-24">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <p className="text-gold-500 font-sans text-xs tracking-ultra-wide uppercase mb-4">
+              Partner Network
+            </p>
+            <h2 className="text-3xl font-serif font-light mb-4">
+              Trusted Partners Worldwide
+            </h2>
+            <p className="text-luxury-muted font-sans max-w-2xl mx-auto">
+              We've built a network of trusted partners and authorized dealers across the globe, 
+              ensuring we can source the rarest timepieces and deliver to collectors everywhere.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { 
+                region: 'United Arab Emirates', 
+                flag: '🇦🇪',
+                description: 'Dubai & Abu Dhabi partners for Middle East collectors'
+              },
+              { 
+                region: 'United States', 
+                flag: '🇺🇸',
+                description: 'Partners in New York, Miami & Los Angeles'
+              },
+              { 
+                region: 'United Kingdom', 
+                flag: '🇬🇧',
+                description: 'London-based partners for European sourcing'
+              },
+              { 
+                region: 'Japan', 
+                flag: '🇯🇵',
+                description: 'Tokyo partners specializing in rare JDM pieces'
+              },
+              { 
+                region: 'Singapore', 
+                flag: '🇸🇬',
+                description: 'Southeast Asia network hub'
+              },
+              { 
+                region: 'Germany', 
+                flag: '🇩🇪',
+                description: 'German precision & European distribution'
+              },
+              { 
+                region: 'Australia', 
+                flag: '🇦🇺',
+                description: 'Sydney & Melbourne collector network'
+              },
+              { 
+                region: 'Canada', 
+                flag: '🇨🇦',
+                description: 'Toronto & Vancouver partners'
+              }
+            ].map((partner, index) => (
+              <motion.div
+                key={partner.region}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                viewport={{ once: true }}
+                className="card-luxury p-6 text-center hover:border-gold-500/30 transition-colors"
+              >
+                <span className="text-4xl mb-3 block">{partner.flag}</span>
+                <h3 className="font-serif text-lg mb-2">{partner.region}</h3>
+                <p className="text-luxury-muted font-sans text-xs leading-relaxed">
+                  {partner.description}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-8 text-center"
+          >
+            <div className="inline-flex items-center gap-2 px-6 py-3 bg-gold-500/10 border border-gold-500/20">
+              <Handshake className="w-5 h-5 text-gold-500" />
+              <span className="text-luxury-light font-sans text-sm">
+                <span className="text-gold-500 font-medium">20+</span> trusted partners across <span className="text-gold-500 font-medium">15+</span> countries
+              </span>
+            </div>
+          </motion.div>
         </div>
       </section>
 

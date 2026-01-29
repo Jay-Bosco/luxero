@@ -251,10 +251,21 @@ export default function AdminOrdersPage() {
     }
 
     try {
+      // Find the label for this status
+      const statusInfo = trackingStatuses.find(s => s.value === trackingForm.status);
+      
       const res = await fetch('/api/admin/orders', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: selectedOrder.id, updates })
+        body: JSON.stringify({ 
+          orderId: selectedOrder.id, 
+          updates,
+          trackingUpdate: {
+            label: statusInfo?.label || trackingForm.status,
+            location: trackingForm.location,
+            description: trackingForm.description
+          }
+        })
       });
       
       if (res.ok) {

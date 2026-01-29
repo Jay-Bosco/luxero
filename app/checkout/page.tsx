@@ -83,6 +83,7 @@ export default function CheckoutPage() {
   const [copied, setCopied] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [savedUsdtAmount, setSavedUsdtAmount] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showUnavailableModal, setShowUnavailableModal] = useState<'bank' | 'card' | null>(null);
 
@@ -210,6 +211,8 @@ export default function CheckoutPage() {
       return;
     }
 
+    // Save the USDT amount before clearing cart
+    setSavedUsdtAmount(usdtAmount);
     setOrderId(data.id);
     setOrderPlaced(true);
     clearCart();
@@ -264,7 +267,7 @@ export default function CheckoutPage() {
               </h3>
               
               <p className="text-luxury-muted font-sans text-sm mb-4">
-                Send exactly <span className="text-gold-500 font-bold">{usdtAmount} USDT</span> to:
+                Send exactly <span className="text-gold-500 font-bold">{savedUsdtAmount || usdtAmount} USDT</span> to:
               </p>
 
               <div className="bg-luxury-black p-4 mb-4">

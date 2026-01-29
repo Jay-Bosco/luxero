@@ -10,6 +10,8 @@ interface WatchesClientProps {
   watches: Watch[];
   brands: string[];
   initialBrand?: string | null;
+  initialFilter?: string | null;
+  initialSort?: string | null;
 }
 
 // Popular luxury watch brands (show 6)
@@ -22,9 +24,16 @@ const popularBrands = [
   'Richard Mille',
 ];
 
-export default function WatchesClient({ watches, brands, initialBrand }: WatchesClientProps) {
+export default function WatchesClient({ watches, brands, initialBrand, initialFilter, initialSort }: WatchesClientProps) {
+  // Set initial category based on URL filter param
+  const getInitialCategory = () => {
+    if (initialFilter === 'featured') return 'popular';
+    if (initialFilter === 'new' || initialSort === 'newest') return 'new';
+    return 'all';
+  };
+
   const [selectedBrand, setSelectedBrand] = useState<string | null>(initialBrand || null);
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'popular' | 'new'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'popular' | 'new'>(getInitialCategory());
   const [priceRange, setPriceRange] = useState<'all' | 'under50k' | '50kto100k' | 'over100k'>('all');
   const [showFilters, setShowFilters] = useState(false);
 

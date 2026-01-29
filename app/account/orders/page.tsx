@@ -472,14 +472,14 @@ export default function MyOrdersPage() {
               </div>
 
               {/* Close Button */}
-              {/* <div className="p-4 border-t border-luxury-gray/30">
+              <div className="p-4 border-t border-luxury-gray/30">
                 <button
                   onClick={() => setTrackingModal(null)}
                   className="btn-solid w-full"
                 >
                   Close
                 </button>
-              </div> */}
+              </div>
             </motion.div>
           </motion.div>
         )}
