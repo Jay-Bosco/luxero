@@ -3,13 +3,16 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingBag, User, Menu, X } from 'lucide-react';
+import { ShoppingBag, User, Menu, X, LogIn } from 'lucide-react';
 import { useCartStore } from '@/lib/cart';
+import { createClient } from '@/lib/supabase/client';
 import SearchBar from '@/components/search/SearchBar';
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const itemCount = useCartStore((state) => state.itemCount());
 
   useEffect(() => {
@@ -18,6 +21,24 @@ export default function Header() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session);
+      setCheckingAuth(false);
+    };
+    checkAuth();
+
+    // Listen for auth changes
+    const supabase = createClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsLoggedIn(!!session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const navLinks = [
@@ -43,37 +64,20 @@ export default function Header() {
             transition={{ duration: 0.8, ease: 'easeOut' }}
             className="relative"
           >
-            {/* Glow effect on hover */}
             <div className="absolute inset-0 bg-gold-500 rounded-full blur-2xl scale-150 opacity-0 group-hover:opacity-30 transition-opacity duration-700" />
-            
-            {/* Logo with hover effect */}
             <motion.img
               src="/logo.png"
               alt="Luxero"
               className="h-12 w-auto relative z-10"
-              whileHover={{ 
-                scale: 1.08,
-                filter: 'brightness(1.3)'
-              }}
-              transition={{ 
-                type: 'spring', 
-                stiffness: 400, 
-                damping: 15 
-              }}
+              whileHover={{ scale: 1.08, filter: 'brightness(1.3)' }}
+              transition={{ type: 'spring', stiffness: 400, damping: 15 }}
             />
-            
-            {/* Continuous shine effect */}
             <div className="absolute inset-0 z-20 overflow-hidden pointer-events-none">
               <motion.div
                 className="absolute top-0 w-[50%] h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12"
                 initial={{ x: '-150%' }}
                 animate={{ x: '350%' }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatDelay: 3,
-                  ease: 'easeInOut'
-                }}
+                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
               />
             </div>
           </motion.div>
@@ -109,12 +113,29 @@ export default function Header() {
         >
           <SearchBar />
 
-          <Link
-            href="/account"
-            className="text-luxury-light hover:text-gold-500 transition-all duration-300 hover:scale-110"
-          >
-            <User size={20} strokeWidth={1.5} />
-          </Link>
+          {!checkingAuth && !isLoggedIn ? (
+            <div className="hidden sm:flex items-center gap-2">
+              <Link
+                href="/account/login"
+                className="px-4 py-2 text-luxury-light hover:text-gold-500 font-sans text-xs tracking-wide uppercase transition-colors"
+              >
+                Login
+              </Link>
+              <Link
+                href="/account/signup"
+                className="px-4 py-2 bg-gold-500 text-luxury-black hover:bg-gold-400 font-sans text-xs tracking-wide uppercase transition-colors"
+              >
+                Sign Up
+              </Link>
+            </div>
+          ) : (
+            <Link
+              href="/account"
+              className="text-luxury-light hover:text-gold-500 transition-all duration-300 hover:scale-110"
+            >
+              <User size={20} strokeWidth={1.5} />
+            </Link>
+          )}
 
           <Link
             href="/cart"
@@ -169,6 +190,26 @@ export default function Header() {
                 </Link>
               </motion.div>
             ))}
+
+            {/* Mobile auth links */}
+            {!checkingAuth && !isLoggedIn && (
+              <div className="flex gap-3 mt-6 pt-6 border-t border-luxury-gray/30">
+                <Link
+                  href="/account/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex-1 py-3 border border-gold-500 text-gold-500 font-sans text-sm tracking-wide uppercase text-center hover:bg-gold-500/10 transition-colors"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/account/signup"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex-1 py-3 bg-gold-500 text-luxury-black font-sans text-sm tracking-wide uppercase text-center hover:bg-gold-400 transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
           </nav>
         </motion.div>
       )}

@@ -44,6 +44,7 @@ export default function AdminProductsPage() {
   const [formData, setFormData] = useState({
     name: '',
     brand: '',
+    model: '',
     collection: '',
     description: '',
     price: '',
@@ -51,6 +52,7 @@ export default function AdminProductsPage() {
     images: [''],
     stock: '1',
     featured: false,
+    sold_out: false,
     active: true,
     specifications: {
       case_size: '',
@@ -107,6 +109,7 @@ export default function AdminProductsPage() {
     setFormData({
       name: '',
       brand: '',
+      model: '',
       collection: '',
       description: '',
       price: '',
@@ -114,6 +117,7 @@ export default function AdminProductsPage() {
       images: [''],
       stock: '1',
       featured: false,
+      sold_out: false,
       active: true,
       specifications: {
         case_size: '',
@@ -139,6 +143,7 @@ export default function AdminProductsPage() {
     setFormData({
       name: watch.name,
       brand: watch.brand,
+      model: watch.model || '',
       collection: watch.collection || '',
       description: watch.description || '',
       price: String(watch.price / 100),
@@ -146,7 +151,8 @@ export default function AdminProductsPage() {
       images: watch.images?.length ? watch.images : [''],
       stock: String(watch.stock),
       featured: watch.featured,
-      active: true,
+      sold_out: watch.sold_out || false,
+      active: watch.active !== false,
       specifications: watch.specifications || {
         case_size: '',
         case_material: '',
@@ -168,6 +174,7 @@ export default function AdminProductsPage() {
     const watchData = {
       name: formData.name,
       brand: formData.brand,
+      model: formData.model || null,
       collection: formData.collection || null,
       description: formData.description,
       price: Math.round(parseFloat(formData.price) * 100),
@@ -175,6 +182,7 @@ export default function AdminProductsPage() {
       images: formData.images.filter(img => img.trim() !== ''),
       stock: parseInt(formData.stock) || 0,
       featured: formData.featured,
+      sold_out: formData.sold_out,
       active: formData.active,
       specifications: formData.specifications
     };
@@ -208,6 +216,27 @@ export default function AdminProductsPage() {
     const supabase = createClient();
     await supabase.from('watches').delete().eq('id', watchId);
     await loadWatches();
+  };
+
+  const handleToggleSoldOut = async (watchId: string, soldOut: boolean) => {
+    const supabase = createClient();
+    
+    // Optimistically update the UI
+    setWatches(watches.map(w => 
+      w.id === watchId ? { ...w, sold_out: soldOut } : w
+    ));
+
+    // Update in database
+    const { error } = await supabase
+      .from('watches')
+      .update({ sold_out: soldOut })
+      .eq('id', watchId);
+
+    if (error) {
+      console.error('Error updating sold out status:', error);
+      // Revert on error
+      await loadWatches();
+    }
   };
 
   const addImageField = () => {
@@ -551,20 +580,26 @@ export default function AdminProductsPage() {
                 <th className="text-left px-6 py-4 font-sans text-xs tracking-wide uppercase text-luxury-muted">Price</th>
                 <th className="text-left px-6 py-4 font-sans text-xs tracking-wide uppercase text-luxury-muted">Stock</th>
                 <th className="text-left px-6 py-4 font-sans text-xs tracking-wide uppercase text-luxury-muted">Status</th>
+                <th className="text-center px-6 py-4 font-sans text-xs tracking-wide uppercase text-luxury-muted">Sold Out</th>
                 <th className="text-right px-6 py-4 font-sans text-xs tracking-wide uppercase text-luxury-muted">Actions</th>
               </tr>
             </thead>
             <tbody>
               {watches.map((watch) => (
-                <tr key={watch.id} className="border-t border-luxury-gray/20">
+                <tr key={watch.id} className={`border-t border-luxury-gray/20 ${watch.sold_out ? 'opacity-60' : ''}`}>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-luxury-gray/30 flex-shrink-0">
+                      <div className="w-16 h-16 bg-luxury-gray/30 flex-shrink-0 relative">
                         {watch.images?.[0] ? (
                           <img src={watch.images[0]} alt="" className="w-full h-full object-contain p-2" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <ImageIcon className="w-6 h-6 text-luxury-muted" />
+                          </div>
+                        )}
+                        {watch.sold_out && (
+                          <div className="absolute inset-0 bg-red-600/20 flex items-center justify-center">
+                            <span className="text-[8px] font-sans uppercase text-red-400 font-bold">Sold</span>
                           </div>
                         )}
                       </div>
@@ -582,10 +617,22 @@ export default function AdminProductsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <span className={`text-xs font-sans uppercase tracking-wide px-2 py-1 ${
+                      watch.sold_out ? 'bg-red-500/20 text-red-400' :
                       watch.featured ? 'bg-gold-500/20 text-gold-500' : 'bg-luxury-gray/30 text-luxury-muted'
                     }`}>
-                      {watch.featured ? 'Featured' : 'Standard'}
+                      {watch.sold_out ? 'Sold Out' : watch.featured ? 'Featured' : 'Standard'}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={watch.sold_out || false}
+                        onChange={(e) => handleToggleSoldOut(watch.id, e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-luxury-gray/50 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                    </label>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-2">
@@ -607,7 +654,7 @@ export default function AdminProductsPage() {
               ))}
               {watches.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-luxury-muted font-sans">
+                  <td colSpan={6} className="px-6 py-12 text-center text-luxury-muted font-sans">
                     No products yet. Click "Add Watch" to create your first product.
                   </td>
                 </tr>
@@ -668,7 +715,17 @@ export default function AdminProductsPage() {
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="label-luxury">Model</label>
+                      <input
+                        type="text"
+                        value={formData.model}
+                        onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                        className="input-luxury"
+                        placeholder="e.g., 126610LN"
+                      />
+                    </div>
                     <div>
                       <label className="label-luxury">Collection</label>
                       <input
@@ -712,7 +769,7 @@ export default function AdminProductsPage() {
                   </div>
 
                   {/* Stock & Status */}
-                  <div className="grid md:grid-cols-3 gap-4">
+                  <div className="grid md:grid-cols-4 gap-4">
                     <div>
                       <label className="label-luxury">Stock Quantity</label>
                       <input
@@ -731,7 +788,17 @@ export default function AdminProductsPage() {
                         onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
                         className="w-5 h-5"
                       />
-                      <label htmlFor="featured" className="font-sans text-sm">Featured Product</label>
+                      <label htmlFor="featured" className="font-sans text-sm">Featured</label>
+                    </div>
+                    <div className="flex items-center gap-3 pt-6">
+                      <input
+                        type="checkbox"
+                        id="sold_out"
+                        checked={formData.sold_out}
+                        onChange={(e) => setFormData({ ...formData, sold_out: e.target.checked })}
+                        className="w-5 h-5 accent-red-500"
+                      />
+                      <label htmlFor="sold_out" className="font-sans text-sm text-red-400">Sold Out</label>
                     </div>
                     <div className="flex items-center gap-3 pt-6">
                       <input

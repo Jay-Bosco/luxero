@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import WatchCard from '@/components/watches/WatchCard';
 import HeroSection from '@/components/layout/HeroSection';
+import StoreRating from '@/components/home/StoreRating';
 
 export default async function HomePage() {
   const supabase = createServerSupabaseClient();
@@ -13,30 +13,54 @@ export default async function HomePage() {
     .select('*')
     .eq('featured', true)
     .eq('active', true)
-    .limit(3);
+    .limit(4);
+
+  // Fetch store settings
+  const { data: storeSettings } = await supabase
+    .from('store_settings')
+    .select('*')
+    .single();
+
+  const settings = storeSettings || {
+    store_rating: 4.9,
+    total_reviews: 1250,
+    total_customers: 850,
+    years_in_business: 5
+  };
 
   return (
     <>
       {/* Hero Section */}
       <HeroSection />
 
+      {/* Store Rating Section */}
+      <StoreRating settings={settings} />
+
       {/* Featured Collection */}
       <section className="py-24 px-6 lg:px-12">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-gold-500 font-sans text-xs tracking-ultra-wide uppercase mb-4">
-              Featured Watches
+              Popular Picks
             </p>
             <h2 className="text-4xl lg:text-5xl font-serif font-light tracking-wide">
-              Just Listed
+              Featured Watches
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredWatches?.map((watch) => (
-              <WatchCard key={watch.id} watch={watch} />
-            ))}
-          </div>
+          {featuredWatches && featuredWatches.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredWatches.map((watch, index) => (
+                <WatchCard key={watch.id} watch={watch} index={index} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-luxury-muted font-sans">
+                New arrivals coming soon.
+              </p>
+            </div>
+          )}
 
           <div className="text-center mt-16">
             <Link href="/watches" className="btn-primary">
@@ -63,8 +87,8 @@ export default async function HomePage() {
               },
               {
                 icon: '🌍',
-                title: 'Global Marketplace',
-                description: 'Shop watches from trusted sellers worldwide with insured shipping.'
+                title: 'Worldwide Delivery',
+                description: 'We ship globally with full insurance and tracking on every order.'
               }
             ].map((item) => (
               <div key={item.title} className="text-center">

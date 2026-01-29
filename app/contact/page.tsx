@@ -54,8 +54,8 @@ export default function ContactPage() {
                 icon: Mail,
                 title: 'Email',
                 description: 'We respond within 24 hours',
-                action: 'support@luxero.com',
-                link: 'mailto:support@luxero.com'
+                action: 'luxerowatches01@gmail.com',
+                link: 'mailto:luxerowatches01@gmail.com'
               },
               {
                 icon: Phone,

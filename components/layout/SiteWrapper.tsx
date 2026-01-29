@@ -3,17 +3,18 @@
 import { usePathname } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import { CartProvider } from '@/context/CartContext';
 
 export default function SiteWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith('/admin');
 
   if (isAdmin) {
-    return <>{children}</>;
+    return <CartProvider>{children}</CartProvider>;
   }
 
   return (
-    <>
+    <CartProvider>
       {/* Decorative elements */}
       <div className="noise-overlay" />
       <div className="accent-line-left" />
@@ -25,6 +26,6 @@ export default function SiteWrapper({ children }: { children: React.ReactNode })
         {children}
       </main>
       <Footer />
-    </>
+    </CartProvider>
   );
 }

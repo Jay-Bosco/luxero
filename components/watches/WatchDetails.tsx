@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { ShoppingBag, Shield, Truck, Award } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShoppingBag, Shield, Truck, Award, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Watch } from '@/types';
 import { useCartStore, formatPrice } from '@/lib/cart';
 import WatchCard from './WatchCard';
@@ -16,14 +17,21 @@ interface WatchDetailsProps {
 }
 
 export default function WatchDetails({ watch, relatedWatches }: WatchDetailsProps) {
+  const router = useRouter();
   const [selectedImage, setSelectedImage] = useState(0);
   const [addedToCart, setAddedToCart] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
+  
+  // Touch handling for swipe
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const minSwipeDistance = 50;
+
+  const isSoldOut = watch.sold_out || watch.stock === 0;
 
   useEffect(() => {
-    // Fetch reviews for this watch
     fetch(`/api/reviews?watch_id=${watch.id}`)
       .then(res => res.json())
       .then(data => setReviews(data.reviews || []))
@@ -31,9 +39,51 @@ export default function WatchDetails({ watch, relatedWatches }: WatchDetailsProp
   }, [watch.id]);
 
   const handleAddToCart = () => {
+    if (isSoldOut) return;
     addItem(watch);
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
+  };
+
+  const handleBuyNow = () => {
+    if (isSoldOut) return;
+    addItem(watch);
+    router.push('/checkout');
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe && watch.images && selectedImage < watch.images.length - 1) {
+      setSelectedImage(prev => prev + 1);
+    }
+    if (isRightSwipe && selectedImage > 0) {
+      setSelectedImage(prev => prev - 1);
+    }
+  };
+
+  const nextImage = () => {
+    if (watch.images && selectedImage < watch.images.length - 1) {
+      setSelectedImage(prev => prev + 1);
+    }
+  };
+
+  const prevImage = () => {
+    if (selectedImage > 0) {
+      setSelectedImage(prev => prev - 1);
+    }
   };
 
   const specs = watch.specifications || {};
@@ -56,32 +106,90 @@ export default function WatchDetails({ watch, relatedWatches }: WatchDetailsProp
         <div className="grid lg:grid-cols-2 gap-16">
           {/* Images */}
           <div>
-            {/* Main image */}
+            {/* Main image with swipe support */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="relative aspect-square bg-gradient-to-br from-luxury-gray/50 to-luxury-dark/50 mb-6"
+              className="relative aspect-square bg-gradient-to-br from-luxury-gray/50 to-luxury-dark/50 mb-6 overflow-hidden"
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
             >
-              <div className="absolute inset-0 flex items-center justify-center p-12">
-                <img
-                  src={watch.images?.[selectedImage] || '/placeholder-watch.jpg'}
-                  alt={watch.name}
-                  className="w-full h-full object-contain drop-shadow-2xl"
-                />
-              </div>
+              {/* Sold Out Badge */}
+              {isSoldOut && (
+                <div className="absolute top-4 left-4 z-30 bg-red-600 text-white px-4 py-2 font-sans text-sm uppercase tracking-wide">
+                  Sold Out
+                </div>
+              )}
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={selectedImage}
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute inset-0 flex items-center justify-center p-12"
+                >
+                  <img
+                    src={watch.images?.[selectedImage] || '/placeholder-watch.jpg'}
+                    alt={watch.name}
+                    className="w-full h-full object-contain drop-shadow-2xl"
+                  />
+                </motion.div>
+              </AnimatePresence>
               
               {/* Glow effect */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-gold-500/10 rounded-full blur-3xl pointer-events-none" />
+
+              {/* Navigation arrows */}
+              {watch.images && watch.images.length > 1 && (
+                <>
+                  <button
+                    onClick={prevImage}
+                    className={`absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-luxury-black/50 hover:bg-luxury-black/80 flex items-center justify-center transition-all ${
+                      selectedImage === 0 ? 'opacity-30 cursor-not-allowed' : 'opacity-100'
+                    }`}
+                    disabled={selectedImage === 0}
+                  >
+                    <ChevronLeft className="text-white" size={24} />
+                  </button>
+                  <button
+                    onClick={nextImage}
+                    className={`absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-luxury-black/50 hover:bg-luxury-black/80 flex items-center justify-center transition-all ${
+                      selectedImage === watch.images.length - 1 ? 'opacity-30 cursor-not-allowed' : 'opacity-100'
+                    }`}
+                    disabled={selectedImage === watch.images.length - 1}
+                  >
+                    <ChevronRight className="text-white" size={24} />
+                  </button>
+                </>
+              )}
+
+              {/* Image counter for mobile */}
+              {watch.images && watch.images.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+                  {watch.images.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImage(index)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        selectedImage === index ? 'bg-gold-500 w-4' : 'bg-white/50'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </motion.div>
 
             {/* Thumbnail gallery */}
             {watch.images && watch.images.length > 1 && (
-              <div className="flex gap-4">
+              <div className="flex gap-4 overflow-x-auto pb-2">
                 {watch.images.map((image, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`w-20 h-20 border transition-colors ${
+                    className={`w-20 h-20 flex-shrink-0 border transition-colors ${
                       selectedImage === index
                         ? 'border-gold-500'
                         : 'border-luxury-gray hover:border-gold-500/50'
@@ -109,9 +217,15 @@ export default function WatchDetails({ watch, relatedWatches }: WatchDetailsProp
                 {watch.collection || watch.brand}
               </p>
 
-              <h1 className="text-4xl lg:text-5xl font-serif font-light mb-6">
+              <h1 className="text-4xl lg:text-5xl font-serif font-light mb-4">
                 {watch.name}
               </h1>
+
+              {watch.model && (
+                <p className="text-luxury-muted font-sans text-sm mb-4">
+                  Model: {watch.model}
+                </p>
+              )}
 
               <p className="text-gold-500 text-3xl font-serif font-light mb-8">
                 {formatPrice(watch.price, watch.currency)}
@@ -125,29 +239,33 @@ export default function WatchDetails({ watch, relatedWatches }: WatchDetailsProp
               <div className="flex gap-4 mb-10">
                 <motion.button
                   onClick={handleAddToCart}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={!isSoldOut ? { scale: 1.02 } : {}}
+                  whileTap={!isSoldOut ? { scale: 0.98 } : {}}
                   className={`flex-1 py-4 font-sans text-sm tracking-extra-wide uppercase flex items-center justify-center gap-3 transition-all duration-300 ${
-                    addedToCart
+                    isSoldOut
+                      ? 'bg-luxury-gray/50 text-luxury-muted cursor-not-allowed'
+                      : addedToCart
                       ? 'bg-green-600 text-white'
                       : 'bg-gold-500 text-luxury-black hover:bg-gold-400'
                   }`}
-                  disabled={watch.stock === 0}
+                  disabled={isSoldOut}
                 >
                   <ShoppingBag size={18} />
-                  {addedToCart ? 'Added to Cart' : watch.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                  {isSoldOut ? 'Sold Out' : addedToCart ? 'Added to Cart' : 'Add to Cart'}
                 </motion.button>
 
-                <Link
-                  href="/cart"
-                  className="px-8 py-4 border border-gold-500 text-gold-500 font-sans text-sm tracking-extra-wide uppercase hover:bg-gold-500 hover:text-luxury-black transition-all duration-300"
-                >
-                  Buy Now
-                </Link>
+                {!isSoldOut && (
+                  <button
+                    onClick={handleBuyNow}
+                    className="px-8 py-4 border border-gold-500 text-gold-500 font-sans text-sm tracking-extra-wide uppercase hover:bg-gold-500 hover:text-luxury-black transition-all duration-300"
+                  >
+                    Buy Now
+                  </button>
+                )}
               </div>
 
               {/* Stock indicator */}
-              {watch.stock > 0 && watch.stock <= 5 && (
+              {!isSoldOut && watch.stock > 0 && watch.stock <= 5 && (
                 <p className="text-gold-500 font-sans text-sm mb-8">
                   Only {watch.stock} left in stock
                 </p>

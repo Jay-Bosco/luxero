@@ -12,6 +12,8 @@ interface WatchCardProps {
 }
 
 export default function WatchCard({ watch, index = 0 }: WatchCardProps) {
+  const isSoldOut = watch.sold_out || watch.stock === 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -26,7 +28,7 @@ export default function WatchCard({ watch, index = 0 }: WatchCardProps) {
             <motion.div
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.4 }}
-              className="relative w-full h-full"
+              className={`relative w-full h-full ${isSoldOut ? 'opacity-60' : ''}`}
             >
               <img
                 src={watch.images?.[0] || '/placeholder-watch.jpg'}
@@ -35,8 +37,15 @@ export default function WatchCard({ watch, index = 0 }: WatchCardProps) {
               />
             </motion.div>
 
+            {/* Sold Out badge */}
+            {isSoldOut && (
+              <div className="absolute top-4 right-4 px-3 py-1 bg-red-600 text-white font-sans text-[10px] tracking-wider uppercase">
+                Sold Out
+              </div>
+            )}
+
             {/* Featured badge */}
-            {watch.featured && (
+            {watch.featured && !isSoldOut && (
               <div className="absolute top-4 left-4 px-3 py-1 bg-gold-500 text-luxury-black font-sans text-[10px] tracking-wider uppercase">
                 Featured
               </div>
@@ -67,9 +76,16 @@ export default function WatchCard({ watch, index = 0 }: WatchCardProps) {
               )}
             </div>
 
-            <p className="text-gold-500 text-xl font-serif font-light">
-              {formatPrice(watch.price, watch.currency)}
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-gold-500 text-xl font-serif font-light">
+                {formatPrice(watch.price, watch.currency)}
+              </p>
+              {isSoldOut && (
+                <span className="text-red-500 font-sans text-xs uppercase tracking-wide">
+                  Unavailable
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </Link>

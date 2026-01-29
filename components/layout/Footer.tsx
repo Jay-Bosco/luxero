@@ -48,7 +48,8 @@ export default function Footer() {
               {[
                 { label: 'About Us', href: '/about' },
                 { label: 'Contact', href: '/contact' },
-                { label: 'Shipping Info', href: '/contact' },
+                { label: 'Shipping & Tracking', href: '/shipping' },
+                { label: 'Track My Order', href: '/shipping' },
                 { label: 'Returns', href: '/contact' }
               ].map((item) => (
                 <li key={item.label}>

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Shield, Award, Truck, Clock, CheckCircle } from 'lucide-react';
+import { Shield, Award, Truck, Clock, MapPin, Globe } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AboutPage() {
@@ -24,10 +24,77 @@ export default function AboutPage() {
             </h1>
             <p className="text-luxury-light font-sans text-lg leading-relaxed">
               Luxero is a premium watch store offering authenticated luxury timepieces 
-              from the world's most prestigious brands. We handle everything — 
-              you just find the watch you love.
+              from the world's most prestigious brands. With headquarters in Switzerland 
+              and operations in Hong Kong, we deliver excellence worldwide.
             </p>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Global Presence */}
+      <section className="px-6 lg:px-12 mb-24">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <p className="text-gold-500 font-sans text-xs tracking-ultra-wide uppercase mb-4">
+              Global Presence
+            </p>
+            <h2 className="text-3xl font-serif font-light">
+              Serving Collectors Worldwide
+            </h2>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Switzerland HQ */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="card-luxury p-8"
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-gold-500/10 flex items-center justify-center">
+                  <MapPin className="w-6 h-6 text-gold-500" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-serif">Switzerland</h3>
+                  <p className="text-gold-500 font-sans text-sm">Headquarters</p>
+                </div>
+              </div>
+              <p className="text-luxury-muted font-sans leading-relaxed">
+                Our headquarters in the heart of Swiss watchmaking country gives us direct 
+                access to the finest timepieces. We work closely with authorized dealers 
+                and collectors across Europe to source exceptional watches.
+              </p>
+            </motion.div>
+
+            {/* Hong Kong Branch */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="card-luxury p-8"
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-gold-500/10 flex items-center justify-center">
+                  <Globe className="w-6 h-6 text-gold-500" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-serif">Hong Kong</h3>
+                  <p className="text-gold-500 font-sans text-sm">Asia Pacific Hub</p>
+                </div>
+              </div>
+              <p className="text-luxury-muted font-sans leading-relaxed">
+                Our Hong Kong branch serves as our Asia Pacific hub, enabling faster 
+                delivery and competitive shipping rates throughout Asia. We maintain 
+                strong relationships with collectors and dealers across the region.
+              </p>
+            </motion.div>
+          </div>
         </div>
       </section>
 
@@ -111,8 +178,8 @@ export default function AboutPage() {
               },
               {
                 icon: Truck,
-                title: 'Insured Shipping',
-                description: 'Free insured shipping on all orders. Your watch is protected from our door to yours.'
+                title: 'Global Shipping',
+                description: 'Fast, insured shipping from Switzerland or Hong Kong — whichever is closer to you.'
               },
               {
                 icon: Clock,

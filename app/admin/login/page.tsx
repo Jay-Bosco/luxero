@@ -2,14 +2,16 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Lock, Mail, AlertCircle } from 'lucide-react';
+import { Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -21,7 +23,6 @@ export default function AdminLoginPage() {
     try {
       const supabase = createClient();
       
-      // Sign in with email/password
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -31,7 +32,6 @@ export default function AdminLoginPage() {
         throw new Error(authError.message);
       }
 
-      // Check if user is an admin
       const { data: adminData, error: adminError } = await supabase
         .from('admin_users')
         .select('*')
@@ -39,12 +39,10 @@ export default function AdminLoginPage() {
         .single();
 
       if (adminError || !adminData) {
-        // Sign out if not an admin
         await supabase.auth.signOut();
         throw new Error('You do not have admin access');
       }
 
-      // Redirect to admin dashboard
       router.push('/admin');
     } catch (err: any) {
       setError(err.message || 'Login failed');
@@ -61,9 +59,32 @@ export default function AdminLoginPage() {
         className="w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mx-auto mb-6">
-            <Lock className="w-8 h-8 text-gold-500" />
-          </div>
+          {/* Animated Logo */}
+          <Link href="/" className="inline-block mb-6">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              className="relative group"
+            >
+              <div className="absolute inset-0 bg-gold-500 rounded-full blur-2xl scale-150 opacity-0 group-hover:opacity-30 transition-opacity duration-700" />
+              <motion.img
+                src="/logo.png"
+                alt="Luxero"
+                className="h-16 w-auto relative z-10 mx-auto"
+                whileHover={{ scale: 1.08, filter: 'brightness(1.3)' }}
+                transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+              />
+              <div className="absolute inset-0 z-20 overflow-hidden pointer-events-none">
+                <motion.div
+                  className="absolute top-0 w-[50%] h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12"
+                  initial={{ x: '-150%' }}
+                  animate={{ x: '350%' }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
+                />
+              </div>
+            </motion.div>
+          </Link>
           <h1 className="text-3xl font-serif font-light mb-2">Admin Login</h1>
           <p className="text-luxury-muted font-sans text-sm">
             Sign in to access the admin dashboard
@@ -96,13 +117,20 @@ export default function AdminLoginPage() {
             <label className="label-luxury">Password</label>
             <div className="relative">
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="input-luxury pl-12"
+                className="input-luxury pl-12 pr-12"
                 required
               />
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-luxury-muted" />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-luxury-muted hover:text-gold-500 transition-colors"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 

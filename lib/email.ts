@@ -71,7 +71,7 @@ export async function sendWelcomeEmail(to: string, name: string) {
                 © ${new Date().getFullYear()} Luxero. All rights reserved.
               </p>
               <p style="margin: 0; font-size: 12px; color: #666; text-align: center;">
-                Questions? Contact us at support@luxero.com
+                Questions? Contact us at luxerowatches01@gmail.com
               </p>
             </td>
           </tr>

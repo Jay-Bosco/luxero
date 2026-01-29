@@ -11,7 +11,8 @@ import {
   DollarSign,
   Plus,
   LogOut,
-  Clock
+  Clock,
+  Star
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -103,8 +104,30 @@ export default function AdminDashboard() {
       <header className="bg-luxury-dark border-b border-luxury-gray/30 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/">
-              <img src="/logo.png" alt="Luxero" className="h-10" />
+            <Link href="/" className="relative group">
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
+                className="relative"
+              >
+                <div className="absolute inset-0 bg-gold-500 rounded-full blur-2xl scale-150 opacity-0 group-hover:opacity-30 transition-opacity duration-700" />
+                <motion.img
+                  src="/logo.png"
+                  alt="Luxero"
+                  className="h-10 relative z-10"
+                  whileHover={{ scale: 1.08, filter: 'brightness(1.3)' }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                />
+                <div className="absolute inset-0 z-20 overflow-hidden pointer-events-none">
+                  <motion.div
+                    className="absolute top-0 w-[50%] h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12"
+                    initial={{ x: '-150%' }}
+                    animate={{ x: '350%' }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
+                  />
+                </div>
+              </motion.div>
             </Link>
             <span className="text-luxury-muted font-sans text-sm">Admin Dashboard</span>
           </div>
@@ -144,7 +167,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Link href="/admin/products" className="card-luxury p-6 hover:border-gold-500/30 transition-colors group">
             <Package className="w-8 h-8 text-gold-500 mb-4" />
             <h3 className="text-lg font-serif mb-2 group-hover:text-gold-500 transition-colors">Manage Products</h3>
@@ -160,7 +183,13 @@ export default function AdminDashboard() {
           <Link href="/admin/reviews" className="card-luxury p-6 hover:border-gold-500/30 transition-colors group">
             <MessageSquare className="w-8 h-8 text-gold-500 mb-4" />
             <h3 className="text-lg font-serif mb-2 group-hover:text-gold-500 transition-colors">Manage Reviews</h3>
-            <p className="text-luxury-muted font-sans text-sm">Approve or reject customer reviews</p>
+            <p className="text-luxury-muted font-sans text-sm">Add & manage customer reviews</p>
+          </Link>
+
+          <Link href="/admin/settings" className="card-luxury p-6 hover:border-gold-500/30 transition-colors group">
+            <Star className="w-8 h-8 text-gold-500 mb-4" />
+            <h3 className="text-lg font-serif mb-2 group-hover:text-gold-500 transition-colors">Store Settings</h3>
+            <p className="text-luxury-muted font-sans text-sm">Ratings & store statistics</p>
           </Link>
         </div>
 

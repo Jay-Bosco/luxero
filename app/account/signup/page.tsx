@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Mail, Lock, User, AlertCircle, CheckCircle, Send } from 'lucide-react';
+import { Mail, Lock, User, AlertCircle, Send, Eye, EyeOff } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 export default function SignupPage() {
@@ -12,6 +12,7 @@ export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [verificationSent, setVerificationSent] = useState(false);
@@ -25,7 +26,6 @@ export default function SignupPage() {
     try {
       const supabase = createClient();
       
-      // Sign up the user with email confirmation
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -41,13 +41,9 @@ export default function SignupPage() {
         throw new Error(authError.message);
       }
 
-      // Check if email confirmation is required
       if (data.user && !data.session) {
-        // Email confirmation required
         setVerificationSent(true);
       } else if (data.user && data.session) {
-        // No email confirmation required (auto-confirmed)
-        // Create profile
         await supabase
           .from('profiles')
           .upsert({
@@ -82,9 +78,6 @@ export default function SignupPage() {
       });
 
       if (error) throw error;
-      
-      // Show success briefly
-      setError('');
     } catch (err: any) {
       setError(err.message || 'Failed to resend verification email');
     } finally {
@@ -92,7 +85,6 @@ export default function SignupPage() {
     }
   };
 
-  // Verification Sent State
   if (verificationSent) {
     return (
       <div className="min-h-screen pt-32 pb-24 px-6 lg:px-12">
@@ -221,15 +213,22 @@ export default function SignupPage() {
             <label className="label-luxury">Password</label>
             <div className="relative">
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="input-luxury pl-12"
+                className="input-luxury pl-12 pr-12"
                 placeholder="••••••••"
                 minLength={6}
                 required
               />
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-luxury-muted" />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-luxury-muted hover:text-gold-500 transition-colors"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
             <p className="text-luxury-muted font-sans text-xs mt-2">
               Minimum 6 characters

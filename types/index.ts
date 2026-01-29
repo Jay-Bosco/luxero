@@ -4,6 +4,7 @@ export interface Watch {
   id: string;
   name: string;
   brand: string;
+  model?: string;
   collection: string;
   description: string;
   price: number; // in cents
@@ -12,6 +13,8 @@ export interface Watch {
   specifications: WatchSpecs;
   stock: number;
   featured: boolean;
+  sold_out?: boolean;
+  active?: boolean;
   created_at: string;
   updated_at: string;
 }
