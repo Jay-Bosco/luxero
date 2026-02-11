@@ -334,3 +334,6 @@ export const watchBrands = [
   'Girard-Perregaux',
   'Grand Seiko'
 ];
+
+// Alias for backward compatibility
+export const quickTemplates = modelTemplates;
