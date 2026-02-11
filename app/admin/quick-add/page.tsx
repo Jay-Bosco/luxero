@@ -106,18 +106,6 @@ export default function QuickAddPage() {
     });
   };
 
-  // Handle image upload
-  const handleImageUploaded = (url: string, index: number) => {
-    const newImages = [...formData.images];
-    newImages[index] = url;
-    setFormData({ ...formData, images: newImages });
-  };
-
-  // Add more image slots
-  const addImageSlot = () => {
-    setFormData({ ...formData, images: [...formData.images, ''] });
-  };
-
   // Save watch
   const handleSave = async () => {
     if (!formData.brand || !formData.name || !formData.price) {
@@ -437,26 +425,10 @@ export default function QuickAddPage() {
                 Images
               </h2>
               
-              <div className="space-y-4">
-                {formData.images.map((image, index) => (
-                  <div key={index}>
-                    <label className="label-luxury">Image {index + 1} {index === 0 && '*'}</label>
-                    <ImageUpload
-                      onImageUploaded={(url) => handleImageUploaded(url, index)}
-                      existingUrl={image}
-                    />
-                  </div>
-                ))}
-                
-                <button
-                  type="button"
-                  onClick={addImageSlot}
-                  className="btn-primary w-full flex items-center justify-center gap-2"
-                >
-                  <Plus size={16} />
-                  Add Another Image
-                </button>
-              </div>
+              <ImageUpload
+                images={formData.images}
+                onImagesChange={(images) => setFormData({ ...formData, images })}
+              />
             </div>
 
             {/* Save Button (Mobile) */}
