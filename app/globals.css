@@ -106,6 +106,15 @@ body {
   }
 }
 
+/* Grid items stretch for equal height cards */
+.grid {
+  align-items: stretch;
+}
+
+.grid > * {
+  height: 100%;
+}
+
 /* Noise texture overlay */
 .noise-overlay {
   position: fixed;

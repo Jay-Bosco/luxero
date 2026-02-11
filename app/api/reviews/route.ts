@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,7 +12,7 @@ export async function POST(request: NextRequest) {
     const { watch_id, name, email, rating, review } = body;
 
     // Validate required fields
-    if (!watch_id || !name || !email || !rating || !review) {
+    if (!watch_id || !name || !rating || !review) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -22,18 +27,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createServerSupabaseClient();
-
-    // Insert review (will be pending approval)
-    const { data, error } = await supabase
+    // Insert review - approved immediately
+    const { data, error } = await supabaseAdmin
       .from('reviews')
       .insert({
         watch_id,
-        name,
-        email,
+        author_name: name,
         rating,
-        review,
-        approved: false,
+        content: review,
+        approved: true,
         verified_purchase: false
       })
       .select()
@@ -62,9 +64,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const watchId = searchParams.get('watch_id');
 
-    const supabase = createServerSupabaseClient();
-
-    let query = supabase
+    let query = supabaseAdmin
       .from('reviews')
       .select('*')
       .eq('approved', true)
@@ -83,7 +83,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ reviews: data });
+    // Map database columns to expected format
+    const reviews = (data || []).map(r => ({
+      id: r.id,
+      watch_id: r.watch_id,
+      name: r.author_name || r.name,
+      rating: r.rating,
+      review: r.content || r.review,
+      title: r.title,
+      verified_purchase: r.verified_purchase,
+      created_at: r.created_at
+    }));
+
+    return NextResponse.json({ reviews });
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error' },

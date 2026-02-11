@@ -7,9 +7,10 @@ import { Star, Send, CheckCircle } from 'lucide-react';
 interface ReviewFormProps {
   watchId: string;
   watchName: string;
+  onSuccess?: () => void;
 }
 
-export default function ReviewForm({ watchId, watchName }: ReviewFormProps) {
+export default function ReviewForm({ watchId, watchName, onSuccess }: ReviewFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -39,7 +40,12 @@ export default function ReviewForm({ watchId, watchName }: ReviewFormProps) {
         throw new Error('Failed to submit review');
       }
 
-      setSubmitted(true);
+      // Call onSuccess callback to reload reviews and close form
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        setSubmitted(true);
+      }
     } catch (err) {
       setError('Failed to submit review. Please try again.');
     } finally {
@@ -59,7 +65,7 @@ export default function ReviewForm({ watchId, watchName }: ReviewFormProps) {
         </div>
         <h3 className="text-xl font-serif font-light mb-2">Thank You!</h3>
         <p className="text-luxury-muted font-sans text-sm">
-          Your review has been submitted and is pending approval.
+          Your review has been submitted successfully.
         </p>
       </motion.div>
     );

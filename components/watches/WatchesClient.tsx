@@ -203,7 +203,7 @@ export default function WatchesClient({ watches, brands, initialBrand, initialFi
           </div>
 
           <p className="text-luxury-muted font-sans text-sm">
-            {filteredWatches.length} {filteredWatches.length === 1 ? 'watch' : 'watches'}
+            Curated Selection
           </p>
         </div>
 
@@ -334,9 +334,6 @@ export default function WatchesClient({ watches, brands, initialBrand, initialFi
             <div className="flex items-center gap-8 mb-10">
               <h2 className="text-3xl font-serif font-light">{selectedBrand}</h2>
               <div className="flex-1 h-px bg-gradient-to-r from-gold-500/30 to-transparent" />
-              <span className="text-luxury-muted font-sans text-sm">
-                {filteredWatches.length} {filteredWatches.length === 1 ? 'model' : 'models'}
-              </span>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -373,7 +370,7 @@ export default function WatchesClient({ watches, brands, initialBrand, initialFi
                     onClick={() => setSelectedBrand(brand)}
                     className="text-gold-500 font-sans text-sm hover:underline"
                   >
-                    View all {brandWatches.length} →
+                    View all →
                   </button>
                 </div>
                 

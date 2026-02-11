@@ -12,7 +12,8 @@ import {
   Plus,
   LogOut,
   Clock,
-  Star
+  Star,
+  Zap
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -167,7 +168,13 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+          <Link href="/admin/quick-add" className="card-luxury p-6 hover:border-gold-500/30 transition-colors group bg-gold-500/5 border-gold-500/20">
+            <Zap className="w-8 h-8 text-gold-500 mb-4" />
+            <h3 className="text-lg font-serif mb-2 group-hover:text-gold-500 transition-colors">Quick Add</h3>
+            <p className="text-luxury-muted font-sans text-sm">Fast product entry with templates</p>
+          </Link>
+
           <Link href="/admin/products" className="card-luxury p-6 hover:border-gold-500/30 transition-colors group">
             <Package className="w-8 h-8 text-gold-500 mb-4" />
             <h3 className="text-lg font-serif mb-2 group-hover:text-gold-500 transition-colors">Manage Products</h3>

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Shield, Truck, Award, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
+import { ShoppingBag, Shield, Truck, Award, ChevronLeft, ChevronRight, Heart, ArrowLeft } from 'lucide-react';
 import { Watch } from '@/types';
 import { useCartStore, formatPrice } from '@/lib/cart';
 import { createClient } from '@/lib/supabase/client';
@@ -35,12 +35,15 @@ export default function WatchDetails({ watch, relatedWatches }: WatchDetailsProp
 
   const isSoldOut = watch.sold_out || watch.stock === 0;
 
-  useEffect(() => {
+  const loadReviews = () => {
     fetch(`/api/reviews?watch_id=${watch.id}`)
       .then(res => res.json())
       .then(data => setReviews(data.reviews || []))
       .catch(err => console.error('Failed to load reviews:', err));
-    
+  };
+
+  useEffect(() => {
+    loadReviews();
     checkWishlistStatus();
   }, [watch.id]);
 
@@ -77,7 +80,6 @@ export default function WatchDetails({ watch, relatedWatches }: WatchDetailsProp
     setWishlistLoading(true);
     
     if (isInWishlist) {
-      // Remove from wishlist
       await supabase
         .from('wishlists')
         .delete()
@@ -85,7 +87,6 @@ export default function WatchDetails({ watch, relatedWatches }: WatchDetailsProp
         .eq('watch_id', watch.id);
       setIsInWishlist(false);
     } else {
-      // Add to wishlist
       await supabase
         .from('wishlists')
         .insert({
@@ -150,6 +151,17 @@ export default function WatchDetails({ watch, relatedWatches }: WatchDetailsProp
 
   return (
     <div className="min-h-screen pt-32 pb-24">
+      {/* Back Button */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-12 mb-6">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-luxury-muted hover:text-gold-500 transition-colors font-sans text-sm"
+        >
+          <ArrowLeft size={18} />
+          <span>Back</span>
+        </button>
+      </div>
+
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-6 lg:px-12 mb-12">
         <nav className="flex items-center gap-3 text-luxury-muted font-sans text-xs tracking-wide">
@@ -340,10 +352,10 @@ export default function WatchDetails({ watch, relatedWatches }: WatchDetailsProp
                 )}
               </div>
 
-              {/* Stock indicator */}
-              {!isSoldOut && watch.stock > 0 && watch.stock <= 5 && (
+              {/* Limited availability indicator - no specific numbers */}
+              {!isSoldOut && watch.stock > 0 && watch.stock <= 3 && (
                 <p className="text-gold-500 font-sans text-sm mb-8">
-                  Only {watch.stock} left in stock
+                  Limited Availability
                 </p>
               )}
 
@@ -415,7 +427,14 @@ export default function WatchDetails({ watch, relatedWatches }: WatchDetailsProp
 
           {showReviewForm && (
             <div className="mb-12">
-              <ReviewForm watchId={watch.id} watchName={watch.name} />
+              <ReviewForm 
+                watchId={watch.id} 
+                watchName={watch.name} 
+                onSuccess={() => {
+                  loadReviews();
+                  setShowReviewForm(false);
+                }}
+              />
             </div>
           )}
 

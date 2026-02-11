@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Lock, Bell, Shield, AlertCircle, CheckCircle } from 'lucide-react';
+import { Lock, Bell, AlertCircle, CheckCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 export default function SettingsPage() {
@@ -184,35 +184,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Account Security */}
-      <div className="card-luxury p-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Shield className="w-5 h-5 text-gold-500" />
-          <h3 className="text-lg font-serif">Account Security</h3>
-        </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between py-3 border-b border-luxury-gray/20">
-            <div>
-              <p className="font-sans text-sm">Two-Factor Authentication</p>
-              <p className="text-luxury-muted font-sans text-xs">Add an extra layer of security</p>
-            </div>
-            <span className="text-luxury-muted font-sans text-xs px-3 py-1 bg-luxury-gray/30">
-              Coming Soon
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between py-3">
-            <div>
-              <p className="font-sans text-sm">Login History</p>
-              <p className="text-luxury-muted font-sans text-xs">View recent account activity</p>
-            </div>
-            <span className="text-luxury-muted font-sans text-xs px-3 py-1 bg-luxury-gray/30">
-              Coming Soon
-            </span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

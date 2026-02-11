@@ -12,7 +12,9 @@ export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [verificationSent, setVerificationSent] = useState(false);
@@ -22,6 +24,13 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Check passwords match
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
 
     try {
       const supabase = createClient();
@@ -209,7 +218,7 @@ export default function SignupPage() {
             </div>
           </div>
 
-          <div className="mb-8">
+          <div className="mb-6">
             <label className="label-luxury">Password</label>
             <div className="relative">
               <input
@@ -233,6 +242,38 @@ export default function SignupPage() {
             <p className="text-luxury-muted font-sans text-xs mt-2">
               Minimum 6 characters
             </p>
+          </div>
+
+          <div className="mb-8">
+            <label className="label-luxury">Confirm Password</label>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className={`input-luxury pl-12 pr-12 ${
+                  confirmPassword && password !== confirmPassword 
+                    ? 'border-red-500 focus:border-red-500' 
+                    : ''
+                }`}
+                placeholder="••••••••"
+                minLength={6}
+                required
+              />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-luxury-muted" />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-luxury-muted hover:text-gold-500 transition-colors"
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {confirmPassword && password !== confirmPassword && (
+              <p className="text-red-400 font-sans text-xs mt-2">
+                Passwords do not match
+              </p>
+            )}
           </div>
 
           <button

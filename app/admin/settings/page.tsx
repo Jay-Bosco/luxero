@@ -1,256 +1,190 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Save, Star, Users, ShoppingBag, Award } from 'lucide-react';
+import { Lock, Bell, AlertCircle, CheckCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
-interface StoreSettings {
-  store_rating: number;
-  total_reviews: number;
-  total_customers: number;
-  years_in_business: number;
-}
-
-export default function AdminSettingsPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+export default function SettingsPage() {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
   
-  const [settings, setSettings] = useState<StoreSettings>({
-    store_rating: 4.9,
-    total_reviews: 1250,
-    total_customers: 850,
-    years_in_business: 5
+  const [preferences, setPreferences] = useState({
+    orderUpdates: true,
+    promotions: false,
+    newArrivals: true
   });
 
-  useEffect(() => {
-    checkAuthAndLoadData();
-  }, []);
-
-  const checkAuthAndLoadData = async () => {
-    const supabase = createClient();
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      router.push('/admin/login');
+    if (newPassword !== confirmPassword) {
+      setMessage({ type: 'error', text: 'New passwords do not match' });
       return;
     }
 
-    const { data: adminData } = await supabase
-      .from('admin_users')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .single();
-
-    if (!adminData) {
-      router.push('/admin/login');
+    if (newPassword.length < 6) {
+      setMessage({ type: 'error', text: 'Password must be at least 6 characters' });
       return;
     }
 
-    // Load store settings
-    const { data: storeData } = await supabase
-      .from('store_settings')
-      .select('*')
-      .single();
+    setLoading(true);
+    setMessage({ type: '', text: '' });
 
-    if (storeData) {
-      setSettings({
-        store_rating: storeData.store_rating || 4.9,
-        total_reviews: storeData.total_reviews || 1250,
-        total_customers: storeData.total_customers || 850,
-        years_in_business: storeData.years_in_business || 5
-      });
-    }
-
-    setLoading(false);
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    const supabase = createClient();
-
-    // Upsert store settings
-    const { error } = await supabase
-      .from('store_settings')
-      .upsert({
-        id: 1, // Single row for store settings
-        store_rating: settings.store_rating,
-        total_reviews: settings.total_reviews,
-        total_customers: settings.total_customers,
-        years_in_business: settings.years_in_business,
-        updated_at: new Date().toISOString()
+    try {
+      const supabase = createClient();
+      
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
       });
 
-    if (!error) {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    }
-    
-    setSaving(false);
-  };
+      if (error) throw error;
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-gold-500/30 border-t-gold-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
+      setMessage({ type: 'success', text: 'Password updated successfully!' });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message || 'Failed to update password' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-luxury-black">
-      {/* Header */}
-      <header className="bg-luxury-dark border-b border-luxury-gray/30 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/admin" className="text-luxury-muted hover:text-gold-500 transition-colors">
-              <ArrowLeft size={20} />
-            </Link>
-            <h1 className="text-xl font-serif">Store Settings</h1>
+    <div className="space-y-8">
+      <h2 className="text-2xl font-serif font-light mb-6">Account Settings</h2>
+
+      {/* Password Change */}
+      <div className="card-luxury p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <Lock className="w-5 h-5 text-gold-500" />
+          <h3 className="text-lg font-serif">Change Password</h3>
+        </div>
+
+        {message.text && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`mb-6 p-4 flex items-center gap-3 ${
+              message.type === 'success' 
+                ? 'bg-green-500/10 border border-green-500/30' 
+                : 'bg-red-500/10 border border-red-500/30'
+            }`}
+          >
+            {message.type === 'success' ? (
+              <CheckCircle className="w-5 h-5 text-green-500" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-red-500" />
+            )}
+            <p className={`font-sans text-sm ${
+              message.type === 'success' ? 'text-green-400' : 'text-red-400'
+            }`}>
+              {message.text}
+            </p>
+          </motion.div>
+        )}
+
+        <form onSubmit={handlePasswordChange} className="space-y-4">
+          <div>
+            <label className="label-luxury">Current Password</label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="input-luxury"
+              required
+            />
+          </div>
+          <div>
+            <label className="label-luxury">New Password</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="input-luxury"
+              minLength={6}
+              required
+            />
+          </div>
+          <div>
+            <label className="label-luxury">Confirm New Password</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="input-luxury"
+              minLength={6}
+              required
+            />
           </div>
           <button
-            onClick={handleSave}
-            disabled={saving}
+            type="submit"
+            disabled={loading}
             className="btn-solid flex items-center gap-2"
           >
-            {saving ? (
+            {loading ? (
               <div className="w-5 h-5 border-2 border-luxury-black/30 border-t-luxury-black rounded-full animate-spin" />
-            ) : saved ? (
-              <>
-                <Star size={18} className="fill-luxury-black" />
-                Saved!
-              </>
             ) : (
-              <>
-                <Save size={18} />
-                Save Changes
-              </>
+              'Update Password'
             )}
           </button>
-        </div>
-      </header>
+        </form>
+      </div>
 
-      <div className="max-w-3xl mx-auto px-6 py-8">
-        {/* Store Rating Section */}
-        <div className="card-luxury p-6 mb-6">
-          <h2 className="text-lg font-serif mb-6 flex items-center gap-3">
-            <Star className="text-gold-500" size={20} />
-            Store Rating & Statistics
-          </h2>
-          <p className="text-luxury-muted font-sans text-sm mb-6">
-            These numbers appear on your homepage to build trust with customers.
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Store Rating */}
-            <div>
-              <label className="label-luxury flex items-center gap-2">
-                <Star size={14} className="text-gold-500" />
-                Overall Store Rating
-              </label>
-              <div className="flex items-center gap-4">
-                <input
-                  type="number"
-                  value={settings.store_rating}
-                  onChange={(e) => setSettings({ ...settings, store_rating: parseFloat(e.target.value) || 0 })}
-                  className="input-luxury w-24"
-                  min="1"
-                  max="5"
-                  step="0.1"
-                />
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map(star => (
-                    <Star
-                      key={star}
-                      size={20}
-                      className={star <= Math.round(settings.store_rating) ? 'text-gold-500 fill-gold-500' : 'text-luxury-gray'}
-                    />
-                  ))}
-                </div>
-              </div>
-              <p className="text-luxury-muted font-sans text-xs mt-1">Recommended: 4.8 - 4.9</p>
-            </div>
-
-            {/* Total Reviews */}
-            <div>
-              <label className="label-luxury flex items-center gap-2">
-                <Users size={14} className="text-gold-500" />
-                Total Reviews Count
-              </label>
-              <input
-                type="number"
-                value={settings.total_reviews}
-                onChange={(e) => setSettings({ ...settings, total_reviews: parseInt(e.target.value) || 0 })}
-                className="input-luxury"
-                min="0"
-              />
-              <p className="text-luxury-muted font-sans text-xs mt-1">Displayed as "X+ Reviews"</p>
-            </div>
-
-            {/* Total Customers */}
-            <div>
-              <label className="label-luxury flex items-center gap-2">
-                <ShoppingBag size={14} className="text-gold-500" />
-                Happy Customers
-              </label>
-              <input
-                type="number"
-                value={settings.total_customers}
-                onChange={(e) => setSettings({ ...settings, total_customers: parseInt(e.target.value) || 0 })}
-                className="input-luxury"
-                min="0"
-              />
-              <p className="text-luxury-muted font-sans text-xs mt-1">Displayed as "X+ Happy Customers"</p>
-            </div>
-
-            {/* Years in Business */}
-            <div>
-              <label className="label-luxury flex items-center gap-2">
-                <Award size={14} className="text-gold-500" />
-                Years in Business
-              </label>
-              <input
-                type="number"
-                value={settings.years_in_business}
-                onChange={(e) => setSettings({ ...settings, years_in_business: parseInt(e.target.value) || 0 })}
-                className="input-luxury"
-                min="1"
-              />
-              <p className="text-luxury-muted font-sans text-xs mt-1">Displayed as "X+ Years Experience"</p>
-            </div>
-          </div>
+      {/* Email Preferences */}
+      <div className="card-luxury p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <Bell className="w-5 h-5 text-gold-500" />
+          <h3 className="text-lg font-serif">Email Preferences</h3>
         </div>
 
-        {/* Preview */}
-        <div className="card-luxury p-6">
-          <h3 className="text-lg font-serif mb-4">Preview (Homepage)</h3>
-          <div className="bg-luxury-dark/50 p-6 rounded">
-            <div className="flex flex-col items-center text-center">
-              <div className="flex items-center gap-1 mb-2">
-                {[1, 2, 3, 4, 5].map(star => (
-                  <Star
-                    key={star}
-                    size={24}
-                    className={star <= Math.round(settings.store_rating) ? 'text-gold-500 fill-gold-500' : 'text-luxury-gray'}
-                  />
-                ))}
-              </div>
-              <p className="text-2xl font-serif text-gold-500 mb-1">{settings.store_rating}</p>
-              <p className="text-luxury-muted font-sans text-sm">
-                Based on {settings.total_reviews.toLocaleString()}+ reviews
-              </p>
-              <div className="flex gap-6 mt-4 text-luxury-muted font-sans text-xs">
-                <span>{settings.total_customers.toLocaleString()}+ Customers</span>
-                <span>{settings.years_in_business}+ Years</span>
-              </div>
+        <div className="space-y-4">
+          <label className="flex items-center gap-4 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={preferences.orderUpdates}
+              onChange={(e) => setPreferences({ ...preferences, orderUpdates: e.target.checked })}
+              className="w-5 h-5 accent-gold-500"
+            />
+            <div>
+              <p className="font-sans text-sm">Order Updates</p>
+              <p className="text-luxury-muted font-sans text-xs">Get notified about order status changes</p>
             </div>
-          </div>
+          </label>
+
+          <label className="flex items-center gap-4 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={preferences.newArrivals}
+              onChange={(e) => setPreferences({ ...preferences, newArrivals: e.target.checked })}
+              className="w-5 h-5 accent-gold-500"
+            />
+            <div>
+              <p className="font-sans text-sm">New Arrivals</p>
+              <p className="text-luxury-muted font-sans text-xs">Be the first to know about new watches</p>
+            </div>
+          </label>
+
+          <label className="flex items-center gap-4 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={preferences.promotions}
+              onChange={(e) => setPreferences({ ...preferences, promotions: e.target.checked })}
+              className="w-5 h-5 accent-gold-500"
+            />
+            <div>
+              <p className="font-sans text-sm">Promotions & Offers</p>
+              <p className="text-luxury-muted font-sans text-xs">Receive exclusive deals and discounts</p>
+            </div>
+          </label>
         </div>
       </div>
+
+
     </div>
   );
 }

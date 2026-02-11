@@ -66,6 +66,10 @@ export default function AdminProductsPage() {
     }
   });
 
+  // Multi-select state
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
+
   useEffect(() => {
     checkAuthAndLoadData();
   }, []);
@@ -96,14 +100,15 @@ export default function AdminProductsPage() {
   };
 
   const loadWatches = async () => {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('watches')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    setWatches(data || []);
-  };
+  const supabase = createClient();
+  const { data } = await supabase
+    .from('watches')
+    .select('*')
+    .order('brand', { ascending: true })
+    .order('name', { ascending: true });
+  
+  setWatches(data || []);
+};
 
   const resetForm = () => {
     setFormData({
@@ -216,6 +221,55 @@ export default function AdminProductsPage() {
     const supabase = createClient();
     await supabase.from('watches').delete().eq('id', watchId);
     await loadWatches();
+  };
+
+  // Multi-select functions
+  const toggleSelectProduct = (watchId: string) => {
+    setSelectedProducts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(watchId)) {
+        newSet.delete(watchId);
+      } else {
+        newSet.add(watchId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedProducts.size === watches.length) {
+      setSelectedProducts(new Set());
+    } else {
+      setSelectedProducts(new Set(watches.map(w => w.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedProducts.size === 0) return;
+    
+    const count = selectedProducts.size;
+    if (!confirm(`Are you sure you want to delete ${count} product${count > 1 ? 's' : ''}? This action cannot be undone.`)) return;
+
+    setDeleting(true);
+    const supabase = createClient();
+    
+    try {
+      const ids = Array.from(selectedProducts);
+      const { error } = await supabase
+        .from('watches')
+        .delete()
+        .in('id', ids);
+      
+      if (error) throw error;
+      
+      setSelectedProducts(new Set());
+      await loadWatches();
+    } catch (error) {
+      console.error('Bulk delete error:', error);
+      alert('Failed to delete some products. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleToggleSoldOut = async (watchId: string, soldOut: boolean) => {
@@ -571,11 +625,55 @@ export default function AdminProductsPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Bulk Actions Bar */}
+        <AnimatePresence>
+          {selectedProducts.size > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-4 p-4 bg-luxury-dark border border-luxury-gray/30 flex items-center justify-between"
+            >
+              <div className="flex items-center gap-4">
+                <span className="text-gold-500 font-sans text-sm">
+                  {selectedProducts.size} product{selectedProducts.size > 1 ? 's' : ''} selected
+                </span>
+                <button
+                  onClick={() => setSelectedProducts(new Set())}
+                  className="text-luxury-muted hover:text-white font-sans text-sm"
+                >
+                  Clear selection
+                </button>
+              </div>
+              <button
+                onClick={handleBulkDelete}
+                disabled={deleting}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-sans text-sm transition-colors disabled:opacity-50"
+              >
+                {deleting ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Trash2 size={16} />
+                )}
+                Delete Selected
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Products Table */}
         <div className="card-luxury overflow-hidden">
           <table className="w-full">
             <thead className="bg-luxury-dark/50">
               <tr>
+                <th className="text-left px-4 py-4">
+                  <input
+                    type="checkbox"
+                    checked={watches.length > 0 && selectedProducts.size === watches.length}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 accent-gold-500 cursor-pointer"
+                  />
+                </th>
                 <th className="text-left px-6 py-4 font-sans text-xs tracking-wide uppercase text-luxury-muted">Product</th>
                 <th className="text-left px-6 py-4 font-sans text-xs tracking-wide uppercase text-luxury-muted">Price</th>
                 <th className="text-left px-6 py-4 font-sans text-xs tracking-wide uppercase text-luxury-muted">Stock</th>
@@ -586,7 +684,15 @@ export default function AdminProductsPage() {
             </thead>
             <tbody>
               {watches.map((watch) => (
-                <tr key={watch.id} className={`border-t border-luxury-gray/20 ${watch.sold_out ? 'opacity-60' : ''}`}>
+                <tr key={watch.id} className={`border-t border-luxury-gray/20 ${watch.sold_out ? 'opacity-60' : ''} ${selectedProducts.has(watch.id) ? 'bg-gold-500/5' : ''}`}>
+                  <td className="px-4 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedProducts.has(watch.id)}
+                      onChange={() => toggleSelectProduct(watch.id)}
+                      className="w-4 h-4 accent-gold-500 cursor-pointer"
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
                       <div className="w-16 h-16 bg-luxury-gray/30 flex-shrink-0 relative">
@@ -654,7 +760,7 @@ export default function AdminProductsPage() {
               ))}
               {watches.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-luxury-muted font-sans">
+                  <td colSpan={7} className="px-6 py-12 text-center text-luxury-muted font-sans">
                     No products yet. Click "Add Watch" to create your first product.
                   </td>
                 </tr>
