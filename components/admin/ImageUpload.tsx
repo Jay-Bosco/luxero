@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { useState, useRef, useCallback } from 'react';
+import { Upload, X, Loader2, GripVertical, ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface ImageUploadProps {
   images: string[];
@@ -12,6 +12,10 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Drag state
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -46,14 +50,12 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
     }
 
     if (uploadedUrls.length > 0) {
-      // Filter out empty strings and add new URLs
       const currentImages = images.filter(img => img.trim() !== '');
       onImagesChange([...currentImages, ...uploadedUrls]);
     }
 
     setUploading(false);
-    
-    // Reset file input
+
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -74,6 +76,55 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
     onImagesChange([...images, '']);
   };
 
+  // --- Reorder helpers ---
+  const moveImage = useCallback((fromIndex: number, toIndex: number) => {
+    const filtered = images.filter(img => img.trim() !== '');
+    if (toIndex < 0 || toIndex >= filtered.length) return;
+    const newImages = [...filtered];
+    const [moved] = newImages.splice(fromIndex, 1);
+    newImages.splice(toIndex, 0, moved);
+    onImagesChange(newImages);
+  }, [images, onImagesChange]);
+
+  // --- Drag handlers ---
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDragIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    // Make the drag image semi-transparent
+    if (e.currentTarget instanceof HTMLElement) {
+      e.dataTransfer.setDragImage(e.currentTarget, 60, 60);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverIndex(index);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, toIndex: number) => {
+    e.preventDefault();
+    if (dragIndex !== null && dragIndex !== toIndex) {
+      moveImage(dragIndex, toIndex);
+    }
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+
+  // Filter to only images that have content (for preview grid)
+  const filledImages = images
+    .map((img, originalIndex) => ({ url: img, originalIndex }))
+    .filter(item => item.url.trim() !== '');
+
   return (
     <div className="space-y-4">
       {/* Upload Area */}
@@ -89,7 +140,7 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
           onChange={handleFileSelect}
           className="hidden"
         />
-        
+
         {uploading ? (
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="w-8 h-8 text-gold-500 animate-spin" />
@@ -112,33 +163,111 @@ export default function ImageUpload({ images, onImagesChange }: ImageUploadProps
         <p className="text-red-500 font-sans text-sm">{error}</p>
       )}
 
-      {/* Image Previews */}
-      {images.some(img => img.trim() !== '') && (
-        <div className="grid grid-cols-4 gap-4">
-          {images.map((img, index) => (
-            img.trim() !== '' && (
-              <div key={index} className="relative group">
-                <div className="aspect-square bg-luxury-gray/30 overflow-hidden">
+      {/* Image Previews with Drag & Drop */}
+      {filledImages.length > 0 && (
+        <div>
+          {filledImages.length > 1 && (
+            <p className="text-luxury-muted font-sans text-xs mb-2">
+              Drag to reorder · First image is the main product photo
+            </p>
+          )}
+          <div className="grid grid-cols-4 gap-4">
+            {filledImages.map((item, gridIndex) => (
+              <div
+                key={`${item.originalIndex}-${item.url}`}
+                draggable
+                onDragStart={(e) => handleDragStart(e, gridIndex)}
+                onDragOver={(e) => handleDragOver(e, gridIndex)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, gridIndex)}
+                onDragEnd={handleDragEnd}
+                className={`
+                  relative group cursor-grab active:cursor-grabbing
+                  transition-all duration-200
+                  ${dragIndex === gridIndex ? 'opacity-30 scale-95' : ''}
+                  ${dragOverIndex === gridIndex && dragIndex !== gridIndex
+                    ? 'ring-2 ring-gold-500 ring-offset-2 ring-offset-luxury-dark scale-105'
+                    : ''
+                  }
+                `}
+              >
+                <div className="aspect-square bg-luxury-gray/30 overflow-hidden relative">
                   <img
-                    src={img}
-                    alt={`Product ${index + 1}`}
-                    className="w-full h-full object-contain p-2"
+                    src={item.url}
+                    alt={`Product ${gridIndex + 1}`}
+                    className="w-full h-full object-contain p-2 pointer-events-none"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '';
                       (e.target as HTMLImageElement).style.display = 'none';
                     }}
                   />
+
+                  {/* Drag handle overlay */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                    <GripVertical
+                      size={24}
+                      className="text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow-lg"
+                    />
+                  </div>
+
+                  {/* Position badge */}
+                  <div className="absolute top-1 left-1 w-5 h-5 bg-black/70 text-white text-[10px] font-sans font-bold flex items-center justify-center">
+                    {gridIndex + 1}
+                  </div>
+
+                  {/* "Main" label on first image */}
+                  {gridIndex === 0 && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-gold-500/90 text-luxury-black text-[9px] font-sans font-bold uppercase tracking-wider text-center py-0.5">
+                      Main
+                    </div>
+                  )}
                 </div>
+
+                {/* Remove button */}
                 <button
                   type="button"
-                  onClick={() => removeImage(index)}
-                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeImage(item.originalIndex);
+                  }}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
                 >
                   <X size={14} />
                 </button>
+
+                {/* Arrow buttons for non-drag fallback */}
+                {filledImages.length > 1 && (
+                  <div className="absolute bottom-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    {gridIndex > 0 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          moveImage(gridIndex, gridIndex - 1);
+                        }}
+                        className="w-5 h-5 bg-black/70 hover:bg-black text-white flex items-center justify-center"
+                        title="Move left"
+                      >
+                        <ArrowLeft size={12} />
+                      </button>
+                    )}
+                    {gridIndex < filledImages.length - 1 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          moveImage(gridIndex, gridIndex + 1);
+                        }}
+                        className="w-5 h-5 bg-black/70 hover:bg-black text-white flex items-center justify-center"
+                        title="Move right"
+                      >
+                        <ArrowRight size={12} />
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
-            )
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
